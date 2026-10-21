@@ -1,0 +1,2371 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Тренажер по рациональным дробям — 8 класс</title>
+  <style>
+    :root {
+      --bg: #0d0f12;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --blue: #58a6ff;
+      --green: #7ee787;
+      --green-btn: #238636;
+      --red: #f85149;
+      --orange: #ffa657;
+      --purple: #d2a8ff;
+      --gold: #f2cc60;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+      background-size: 24px 24px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px;
+      overflow-x: hidden;
+    }
+
+    .screen {
+      display: none;
+      width: 100%;
+      max-width: 450px;
+      flex-direction: column;
+      align-items: center;
+      animation: fadeIn 0.35s ease-out;
+    }
+    .screen.active { display: flex; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* --- WELCOME SCREEN --- */
+    .welcome-card {
+      background: rgba(22, 27, 34, 0.94);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+      margin-top: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      width: 100%;
+    }
+    .welcome-card h1 {
+      font-size: 20px;
+      color: var(--blue);
+      margin-bottom: 14px;
+      text-align: center;
+    }
+    .welcome-card p {
+      font-size: 13.5px;
+      line-height: 1.55;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .welcome-card p.highlight {
+      color: var(--text);
+      font-weight: bold;
+      text-align: center;
+      margin-top: 8px;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    input[type="text"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 15px;
+      outline: none;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    input[type="text"]:focus { border-color: var(--blue); }
+
+    .btn {
+      background: var(--green-btn);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 13px 16px;
+      font-size: 15px;
+      font-weight: bold;
+      font-family: inherit;
+      cursor: pointer;
+      transition: transform 0.15s, background 0.2s, box-shadow 0.2s;
+      text-align: center;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-blue {
+      background: #1f6feb;
+      box-shadow: 0 4px 14px rgba(31, 111, 235, 0.35);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      padding: 8px 12px;
+    }
+
+    /* --- SCORE HUD & HEADER (CLEAN) --- */
+    .game-header {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+    }
+    .hud-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      gap: 6px;
+    }
+    .score-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--gold);
+      font-weight: bold;
+      font-size: 13px;
+      background: rgba(242, 204, 96, 0.12);
+      border: 1px solid rgba(242, 204, 96, 0.35);
+      padding: 4px 10px;
+      border-radius: 8px;
+      transition: transform 0.2s ease;
+    }
+    .score-badge.bump { transform: scale(1.08); }
+
+    .combo-badge {
+      font-size: 12.5px;
+      font-weight: bold;
+      color: var(--orange);
+      background: rgba(255, 166, 87, 0.12);
+      border: 1px solid rgba(255, 166, 87, 0.3);
+      padding: 4px 10px;
+      border-radius: 8px;
+      transition: transform 0.2s ease;
+    }
+    .combo-badge.bump { transform: scale(1.12); }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 2px;
+    }
+    .stage-title {
+      font-size: 13px;
+      font-weight: bold;
+      color: var(--blue);
+    }
+    .streak-badge {
+      font-size: 12.5px;
+      font-weight: bold;
+      color: var(--text);
+      background: #21262d;
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+    .stage-dots {
+      display: flex;
+      gap: 6px;
+      justify-content: space-between;
+    }
+    .stage-dot {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: #21262d;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .stage-dot.done { background: var(--green-btn); }
+    .stage-dot.current { background: var(--blue); box-shadow: 0 0 8px rgba(88,166,255,0.6); }
+
+    /* --- RICH FORMULA & INSTRUCTION BOX --- */
+    .instruction-box {
+      width: 100%;
+      background: rgba(22, 27, 34, 0.92);
+      border: 1px solid var(--border);
+      border-left: 3.5px solid var(--blue);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12.5px;
+      line-height: 1.48;
+      color: var(--text);
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: border-color 0.25s, background 0.25s;
+    }
+    .instruction-box.error {
+      border-left-color: var(--red);
+      background: rgba(248, 81, 73, 0.12);
+      color: #ffb4b0;
+      animation: shake 0.35s ease;
+    }
+    .instruction-box.success {
+      border-left-color: var(--green);
+      background: rgba(126, 231, 135, 0.09);
+    }
+    .formula-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      align-self: flex-start;
+      background: #0d0f12;
+      border: 1px solid rgba(88, 166, 255, 0.35);
+      color: var(--blue);
+      font-weight: bold;
+      font-size: 12px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      letter-spacing: 0.3px;
+    }
+    .step-log {
+      font-size: 12px;
+      color: var(--green);
+      background: rgba(126, 231, 135, 0.08);
+      border-left: 2px solid var(--green);
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin-top: 2px;
+      display: none;
+    }
+    .step-log.visible { display: block; animation: fadeIn 0.25s ease; }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    /* --- MATH BOARD (CLEAN SANDBOX) --- */
+    .math-board {
+      width: 100%;
+      min-height: 225px;
+      background: rgba(22, 27, 34, 0.72);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px 10px 18px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .board-top-bar {
+      position: absolute;
+      top: 8px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .mode-badge {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 3px 7px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .mode-demo { background: rgba(88, 166, 255, 0.2); color: var(--blue); border: 1px solid rgba(88,166,255,0.4); }
+    .mode-practice { background: rgba(126, 231, 135, 0.15); color: var(--green); border: 1px solid rgba(126,231,135,0.3); }
+
+    .board-controls {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .btn-mini {
+      background: #21262d;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s, transform 0.15s;
+    }
+    .btn-mini:hover { color: var(--text); border-color: var(--blue); }
+    .btn-mini:active { transform: scale(0.94); }
+    .btn-mini.hint-bulb {
+      padding: 4px 7px;
+      font-size: 13px;
+      line-height: 1;
+      border-color: rgba(255, 166, 87, 0.35);
+    }
+
+    .equation-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 6px;
+      width: 100%;
+    }
+
+    .fraction {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      vertical-align: middle;
+      transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .fraction.flipping {
+      transform: rotateX(360deg) scale(1.08);
+    }
+    .frac-part {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 6px 10px;
+      min-height: 44px;
+      min-width: 54px;
+    }
+    .frac-line {
+      width: 100%;
+      height: 2.5px;
+      background: var(--text);
+      border-radius: 2px;
+    }
+
+    .op-sign {
+      font-size: 26px;
+      font-weight: bold;
+      color: var(--blue);
+      padding: 6px 8px;
+      border-radius: 8px;
+      transition: transform 0.25s, background 0.25s;
+    }
+    .op-sign.clickable {
+      cursor: pointer;
+      background: rgba(88, 166, 255, 0.15);
+      border: 1.5px dashed var(--blue);
+      animation: pulse 1.3s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.12); }
+    }
+
+    /* --- TOKENS (DRAGGABLE ITEMS & POLYNOMIALS) --- */
+    .token {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 600;
+      padding: 5px 8px;
+      border-radius: 8px;
+      border: 1.5px solid transparent;
+      transition: border-color 0.2s, background 0.2s, transform 0.2s, box-shadow 0.2s;
+      touch-action: none;
+    }
+    .token sup {
+      font-size: 13px;
+      margin-left: 1px;
+      margin-top: -10px;
+    }
+    .token.draggable {
+      cursor: grab;
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+    .token.dragging {
+      position: fixed;
+      z-index: 1500;
+      background: #1f242c;
+      border-color: var(--blue);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+      transform: scale(1.1);
+      pointer-events: none;
+    }
+    .token.drop-target {
+      border-color: var(--green);
+      background: rgba(126, 231, 135, 0.16);
+      transform: scale(1.07);
+    }
+    .token.radar-glow {
+      border-color: var(--orange) !important;
+      box-shadow: 0 0 14px rgba(255, 166, 87, 0.65);
+      animation: pulse 1s infinite;
+    }
+    .token.poly-box {
+      background: rgba(88, 166, 255, 0.06);
+      border: 1.5px dashed rgba(88, 166, 255, 0.35);
+      padding: 6px 10px;
+    }
+    .token.poly-box.droppable-skill {
+      border-color: var(--green);
+      background: rgba(126, 231, 135, 0.15);
+      transform: scale(1.05);
+    }
+
+    /* Strikethrough & Remainder Badge */
+    .token.struck > .tok-text {
+      position: relative;
+      color: var(--muted);
+      opacity: 0.55;
+    }
+    .token.struck > .tok-text::after {
+      content: '';
+      position: absolute;
+      left: -3px;
+      right: -3px;
+      top: 50%;
+      height: 2.5px;
+      background: var(--red);
+      transform: rotate(-16deg);
+    }
+    .rem-badge {
+      font-size: 14px;
+      font-weight: bold;
+      color: var(--green);
+      background: rgba(13, 15, 18, 0.9);
+      border: 1px solid rgba(126, 231, 135, 0.4);
+      padding: 1px 5px;
+      border-radius: 5px;
+      margin-left: 4px;
+      animation: fadeIn 0.25s ease;
+    }
+    .rem-badge sup {
+      font-size: 10px;
+      margin-top: -6px;
+    }
+
+    /* Clean final result on the right of '=' */
+    .equals-block {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: 6px;
+      animation: fadeIn 0.4s ease;
+    }
+    .equals-sign {
+      font-size: 24px;
+      color: var(--green);
+      font-weight: bold;
+    }
+    .result-box {
+      background: rgba(126, 231, 135, 0.1);
+      border: 1.5px solid var(--green);
+      border-radius: 10px;
+      padding: 6px 12px;
+      color: var(--green);
+      font-size: 22px;
+      font-weight: bold;
+      box-shadow: 0 0 16px rgba(126, 231, 135, 0.2);
+    }
+
+    /* --- SKILL INVENTORY & INPUT DRAWER --- */
+    .tools-area {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .skill-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      width: 100%;
+      padding: 4px;
+    }
+    .skill-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .skill-icon {
+      width: 58px;
+      height: 58px;
+      background: linear-gradient(135deg, #1f242c, #2a313c);
+      border: 2px solid var(--blue);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      touch-action: none;
+      box-shadow: inset 0 0 12px rgba(88, 166, 255, 0.15), 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .skill-icon svg {
+      width: 34px;
+      height: 34px;
+      stroke: var(--blue);
+      filter: drop-shadow(0 0 4px rgba(88, 166, 255, 0.7));
+    }
+    .skill-icon.dragging {
+      position: fixed;
+      z-index: 2000;
+      opacity: 0.95;
+      transform: scale(1.1);
+      pointer-events: none;
+    }
+    .skill-label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* Input Drawer */
+    .drawer {
+      display: none;
+      width: 100%;
+      background: var(--card);
+      border: 1.5px solid var(--blue);
+      border-radius: 14px;
+      padding: 12px;
+      flex-direction: column;
+      gap: 10px;
+      animation: fadeIn 0.25s ease;
+    }
+    .drawer.active { display: flex; }
+    .drawer-title {
+      font-size: 12.5px;
+      color: var(--blue);
+      text-align: center;
+      font-weight: bold;
+    }
+    .drawer-display {
+      width: 100%;
+      height: 42px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: bold;
+      color: var(--green);
+      letter-spacing: 1px;
+    }
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+    }
+    .key-btn {
+      background: #21262d;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 600;
+      padding: 10px 0;
+      cursor: pointer;
+      text-align: center;
+    }
+    .key-btn:active { background: #30363d; transform: scale(0.95); }
+    .key-btn.var-key { color: var(--blue); background: rgba(88,166,255,0.1); }
+    .key-btn.action-ok {
+      grid-column: span 2;
+      background: var(--green-btn);
+      color: #fff;
+      border-color: var(--green-btn);
+    }
+    .key-btn.action-del {
+      background: rgba(248, 81, 73, 0.15);
+      color: var(--red);
+    }
+
+    /* Flying animation clone & Ghost Hand */
+    .flyer {
+      position: fixed;
+      font-size: 24px;
+      font-weight: bold;
+      color: var(--green);
+      pointer-events: none;
+      z-index: 2500;
+      transition: transform 0.75s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.75s ease;
+    }
+
+    .ghost-hand {
+      position: fixed;
+      font-size: 28px;
+      pointer-events: none;
+      z-index: 3000;
+      transition: left 0.75s ease-in-out, top 0.75s ease-in-out, transform 0.25s ease;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.7));
+      display: none;
+    }
+
+    /* Achievement Toast */
+    .achievement-toast {
+      position: fixed;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: linear-gradient(135deg, rgba(22, 27, 34, 0.98), rgba(33, 38, 45, 0.98));
+      border: 1.5px solid var(--purple);
+      border-radius: 14px;
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.75), 0 0 18px rgba(210, 168, 255, 0.25);
+      z-index: 4000;
+      transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+    }
+    .achievement-toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Footer controls */
+    .bottom-actions {
+      width: 100%;
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .bottom-actions .btn { flex: 1; }
+
+    /* Certificate Screen */
+    .cert-card {
+      background: linear-gradient(145deg, #161b22, #0d1117);
+      border: 2px solid var(--green);
+      border-radius: 18px;
+      padding: 24px 20px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 0 32px rgba(126, 231, 135, 0.16);
+      margin-top: 14px;
+    }
+    .cert-badge { font-size: 44px; margin-bottom: 6px; }
+    .score-showcase {
+      background: rgba(242, 204, 96, 0.08);
+      border: 1.5px solid rgba(242, 204, 96, 0.45);
+      border-radius: 14px;
+      padding: 12px;
+      margin: 14px 0;
+    }
+    .score-showcase-num {
+      font-size: 28px;
+      font-weight: bold;
+      color: var(--gold);
+      letter-spacing: 1px;
+    }
+    .ach-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+      margin: 10px 0;
+    }
+    .ach-chip {
+      background: rgba(210, 168, 255, 0.1);
+      border: 1px solid rgba(210, 168, 255, 0.35);
+      color: var(--purple);
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    .cert-code {
+      background: var(--bg);
+      border: 1px dashed var(--border);
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 15px;
+      color: var(--orange);
+      margin: 12px 0;
+      letter-spacing: 1.2px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ВСПЛЫВАЮЩАЯ АЧИВКА -->
+  <div class="achievement-toast" id="achToast">
+    <span style="font-size:24px;" id="achIcon">🏅</span>
+    <div>
+      <div style="font-size:10px; color:var(--purple); text-transform:uppercase; font-weight:bold; letter-spacing:0.6px;">Достижение открыто!</div>
+      <div style="font-size:13.5px; color:var(--text); font-weight:bold;" id="achTitle">Первое сокращение</div>
+    </div>
+  </div>
+
+  <!-- ЭКРАН 1: ПРИВЕТСТВИЕ -->
+  <div id="screen-welcome" class="screen active">
+    <div class="welcome-card">
+      <h1>Привет, 8 класс!</h1>
+      <p>Я знаю, что последняя тема по алгебре далась нам непросто. Мы шли в быстром темпе, и контрольная показала, что многие запутались в сокращении дробей и знаках.</p>
+      <p>Это моя ответственность как учителя — я поторопился и не успел дать вам почувствовать тему наглядно. В качестве извинения я собрал для вас эту интерактивную песочницу.</p>
+      <p>Здесь нет скучных тестов. Вы сможете руками перетаскивать части дробей, выносить множители за скобку и увидеть, почему нельзя сокращать слагаемые. Пройдите все 7 ступеней и покажите финальный экран, чтобы исправить оценку!</p>
+      <p class="highlight">Жмакай не бойся</p>
+
+      <div class="input-group">
+        <input type="text" id="studentName" placeholder="Введи Фамилию и Имя" autocomplete="off">
+        <button class="btn" id="btnStart">Начать прохождение</button>
+      </div>
+    </div>
+    <button class="btn btn-outline" id="btnHardReset" style="display:none; margin-top: 14px;">Сбросить сохранение (другой ученик)</button>
+  </div>
+
+  <!-- ЭКРАН 2: ОСНОВНОЙ ТРЕНАЖЕР -->
+  <div id="screen-game" class="screen">
+    <div class="game-header">
+      <div class="hud-row">
+        <div class="score-badge" id="uiScore">🏆 Счёт: 0</div>
+        <div class="combo-badge" id="uiCombo">🔥 x1</div>
+      </div>
+      <div class="header-top">
+        <div class="stage-title" id="uiStageTitle">Ступень 1: Числа</div>
+        <div class="streak-badge" id="uiProgress">🎯 0 / 5</div>
+      </div>
+      <div class="stage-dots" id="uiStageDots"></div>
+    </div>
+
+    <!-- Информативная математическая карточка с формулой и логом -->
+    <div class="instruction-box" id="uiInstruction">
+      <div class="formula-pill" id="uiFormulaPill">Формула</div>
+      <div id="uiHintText">Загрузка...</div>
+      <div class="step-log" id="uiStepLog"></div>
+    </div>
+
+    <div class="math-board" id="mathBoard">
+      <div class="board-top-bar">
+        <span class="mode-badge mode-demo" id="uiModeBadge">Разбор</span>
+        <div class="board-controls">
+          <button class="btn-mini hint-bulb" id="btnRadar" title="Подсказка">💡</button>
+          <button class="btn-mini" id="btnResetTask" title="Повторить или сбросить пример">↺ Заново</button>
+        </div>
+      </div>
+      <div class="equation-row" id="equationRow"></div>
+    </div>
+
+    <div class="tools-area">
+      <!-- Слот навыка "Вынести за скобку" (Ступени 5-7) -->
+      <div class="skill-bar" id="skillBar" style="display:none;">
+        <div class="skill-slot">
+          <div class="skill-icon" id="skillFactor" title="Перетащи на сумму или разность">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 12h9" />
+              <path d="M9 8l4 4-4 4" />
+              <path d="M19 5c-2.8 3.5-2.8 10.5 0 14" />
+            </svg>
+          </div>
+          <span class="skill-label">Инструмент: Вынести →(</span>
+        </div>
+      </div>
+
+      <!-- Выдвижная кастомная клавиатура для ввода делителя или множителя -->
+      <div class="drawer" id="inputDrawer">
+        <div class="drawer-title" id="drawerTitle">На что сокращаем (делим)?</div>
+        <div class="drawer-display" id="drawerDisplay"></div>
+        <div class="keypad" id="keypadGrid"></div>
+      </div>
+
+      <!-- Кнопки управления переходом -->
+      <div class="bottom-actions">
+        <button class="btn btn-blue" id="btnDemoAction" style="display:none;">В песочницу (Решать самому) →</button>
+        <button class="btn" id="btnNextTask" style="display:none;">Следующий пример →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ЭКРАН 3: ФИНАЛЬНЫЙ СЕРТИФИКАТ С ИТОГОВЫМ СЧЁТОМ -->
+  <div id="screen-finish" class="screen">
+    <div class="cert-card">
+      <div class="cert-badge">🏆</div>
+      <h2 style="color: var(--green); margin-bottom: 4px;">Тема полностью освоена!</h2>
+      <p style="color: var(--text); font-size: 16px; font-weight: bold;" id="certName">Ученик</p>
+
+      <div class="score-showcase">
+        <div class="score-showcase-num" id="certScore">0 ОЧКОВ</div>
+      </div>
+
+      <div class="ach-grid" id="certAchList"></div>
+
+      <p style="color: var(--muted); font-size: 12.5px; margin-top: 8px; line-height: 1.45;">
+        Пройдены все 7 ступеней: сокращение степеней, умножение и деление дробей, защита от сокращения слагаемых, вынесение за скобку и ловушка со знаком «−1».
+      </p>
+      <div class="cert-code" id="certCode">КОД: L94-XXXX</div>
+      <p style="color: var(--muted); font-size: 11.5px; margin-bottom: 14px;">
+        Сделай скриншот этого экрана с твоим итоговым счётом и покажи учителю!
+      </p>
+      <button class="btn btn-outline" id="btnBackToStages" style="width:100%;">Вернуться в песочницу ступеней</button>
+    </div>
+  </div>
+
+  <!-- Призрачный пальчик для авто-обучения -->
+  <div class="ghost-hand" id="ghostHand">👆</div>
+
+  <script>
+    /******************************************************************
+     * 1. БАЗОВЫЕ УТИЛИТЫ И СПОКОЙНАЯ СИСТЕМА ОЧКОВ + АЧИВКИ
+     ******************************************************************/
+    function gcd(a, b) {
+      a = Math.abs(a); b = Math.abs(b);
+      while (b) { let t = b; b = a % b; a = t; }
+      return a || 1;
+    }
+
+    function randInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function randChoice(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    const ACHIEVEMENTS_META = {
+      first_cut:   { icon: '✂️', title: 'Первое сокращение' },
+      sniper:      { icon: '🎯', title: 'Серия без ошибок (5 подряд)' },
+      flip_master: { icon: '🔄', title: 'Мастер переворота' },
+      math_saved:  { icon: '🛡️', title: 'Алгебра спасена!' },
+      factor_pro:  { icon: '🧩', title: 'Архитектор скобок' },
+      minus_tamer: { icon: '🧲', title: 'Укротитель минуса' }
+    };
+
+    // Спокойное начисление очков только в шапке (без летающих цифр)
+    function addPoints(basePts) {
+      if (state.isDemoMode) return;
+      const gained = basePts * state.combo;
+      state.score += gained;
+      state.combo = Math.min(5, state.combo + 1);
+      updateHUD();
+      saveProgress();
+    }
+
+    // При ошибке баллы НЕ отнимаются, просто мягко сбрасывается множитель комбо
+    function registerMistake() {
+      if (state.isDemoMode) return;
+      state.combo = 1;
+      state.cleanStreak = 0;
+      if (state.currentTask) {
+        state.currentTask.mistakes = (state.currentTask.mistakes || 0) + 1;
+      }
+      updateHUD();
+      saveProgress();
+    }
+
+    function unlockAchievement(id) {
+      if (state.achievements.includes(id)) return;
+      const meta = ACHIEVEMENTS_META[id];
+      if (!meta) return;
+      state.achievements.push(id);
+      saveProgress();
+      const toast = document.getElementById('achToast');
+      document.getElementById('achIcon').textContent = meta.icon;
+      document.getElementById('achTitle').textContent = meta.title;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3200);
+    }
+
+    function updateHUD() {
+      const scoreEl = document.getElementById('uiScore');
+      scoreEl.textContent = `🏆 Счёт: ${state.score}`;
+      scoreEl.classList.add('bump');
+      setTimeout(() => scoreEl.classList.remove('bump'), 200);
+
+      const comboEl = document.getElementById('uiCombo');
+      comboEl.textContent = `🔥 x${state.combo}`;
+      comboEl.classList.add('bump');
+      setTimeout(() => comboEl.classList.remove('bump'), 200);
+    }
+
+    // Форматирует одночлен вида { sign: 1|-1, c: число, vars: {x: 2, y: 1} } в HTML
+    function formatMonomialHTML(m) {
+      if (!m) return '1';
+      if (m.isBracket) {
+        let prefix = m.sign === -1 ? '−' : '';
+        return `${prefix}(${m.bracketText})`;
+      }
+      let signStr = m.sign === -1 ? '−' : '';
+      let varKeys = Object.keys(m.vars || {}).filter(k => m.vars[k] > 0);
+      let cStr = (m.c === 1 && varKeys.length > 0) ? '' : String(m.c);
+      let vStr = varKeys.map(k => {
+        let p = m.vars[k];
+        return p === 1 ? k : `${k}<sup>${p}</sup>`;
+      }).join('');
+      return signStr + (cStr + vStr || '1');
+    }
+
+    function parseUserInput(str) {
+      str = str.replace(/\s+/g, '').replace('−', '-').toLowerCase();
+      if (!str) return null;
+      let sign = 1;
+      if (str.startsWith('-')) {
+        sign = -1;
+        str = str.slice(1);
+      }
+      if (!str) return null;
+
+      let cMatch = str.match(/^\d+/);
+      let c = cMatch ? parseInt(cMatch[0], 10) : 1;
+      let rest = cMatch ? str.slice(cMatch[0].length) : str;
+
+      let vars = {};
+      let varRegex = /([a-z])(?:\^?(\d+))?/g;
+      let match;
+      while ((match = varRegex.exec(rest)) !== null) {
+        let v = match[1];
+        let p = match[2] ? parseInt(match[2], 10) : 1;
+        vars[v] = (vars[v] || 0) + p;
+      }
+      return { sign, c, vars };
+    }
+
+    function canReduceTokens(t1, t2) {
+      if (t1.type === 'poly' || t2.type === 'poly') return false;
+      if (t1.isBracket || t2.isBracket) {
+        return t1.isBracket && t2.isBracket && t1.bracketText === t2.bracketText && !t1.eliminated && !t2.eliminated;
+      }
+      if (gcd(t1.c, t2.c) > 1) return true;
+      for (let v of Object.keys(t1.vars || {})) {
+        if ((t1.vars[v] || 0) > 0 && (t2.vars[v] || 0) > 0) return true;
+      }
+      return false;
+    }
+
+    /******************************************************************
+     * 2. КОНФИГУРАЦИЯ ВСЕХ 7 СТУПЕНЕЙ С НАГЛЯДНЫМИ ФОРМУЛАМИ
+     ******************************************************************/
+    const STAGES = [
+      {
+        id: 1,
+        title: 'Ступень 1: Числа',
+        goalCount: 5,
+        hasFactorSkill: false,
+        formulaHTML: 'Основное свойство: (a · k) / (b · k) = a / b',
+        demoExplain: 'Чтобы сократить дробь <b>2 / 4</b>, делим числитель и знаменатель на их наибольший общий делитель <b>2</b>: сверху 2 : 2 = 1, снизу 4 : 2 = 2.',
+        practiceHint: 'Перетащи числитель на знаменатель и введи число, на которое делятся оба элемента.',
+        getDemoTask: () => createMonomialTask([{c:2, vars:{}}], [{c:4, vars:{}}], '*', '1 / 2'),
+        getPracticeTask: () => generateStage1Task()
+      },
+      {
+        id: 2,
+        title: 'Ступень 2: Степени',
+        goalCount: 5,
+        hasFactorSkill: false,
+        formulaHTML: 'Свойство степеней: xⁿ / xᵐ = xⁿ⁻ᵐ',
+        demoExplain: 'При делении одинаковых букв их показатели вычитаются! В примере <b>x⁵ / x²</b> делим обе части на меньшую степень <b>x²</b>: сверху остаётся x⁵⁻² = <b>x³</b>, снизу <b>1</b>.',
+        practiceHint: 'Перетащи переменную на переменную и раздели их на наименьшую степень (например, x^2).',
+        getDemoTask: () => createMonomialTask([{c:1, vars:{x:5}}], [{c:1, vars:{x:2}}], '*', 'x³'),
+        getPracticeTask: () => generateStage2Task()
+      },
+      {
+        id: 3,
+        title: 'Ступень 3: Числа и степени',
+        goalCount: 5,
+        hasFactorSkill: false,
+        formulaHTML: 'Одночлены: (12 · x³) / (8 · x²) = (3 · x³⁻²) / 2',
+        demoExplain: 'Сокращаем числа и буквы: <b>12</b> и <b>8</b> делятся на <b>4</b> (остаётся 3 и 2), а степени <b>x³</b> и <b>x²</b> делятся на <b>x²</b> (сверху остаётся x). Общий делитель: <b>4x²</b>.',
+        practiceHint: 'Умный генератор: сокращай сразу целиком (напр. 4x^2) или в два шага — сначала числа, потом буквы!',
+        getDemoTask: () => createMonomialTask([{c:12, vars:{x:3}}], [{c:8, vars:{x:2}}], '*', '3x / 2'),
+        getPracticeTask: () => generateStage3Task()
+      },
+      {
+        id: 4,
+        title: 'Ступень 4: Умножение и деление',
+        goalCount: 6,
+        hasFactorSkill: false,
+        formulaHTML: 'Деление: (A / B) : (C / D) = (A / B) · (D / C)',
+        demoExplain: 'Шаг 1: Нажимаем на двоеточие «<b>:</b>», чтобы заменить деление на умножение и перевернуть вторую дробь. Шаг 2: Сокращаем множители крест-накрест (7p² с 14p и 6q² с 2q).',
+        practiceHint: 'При делении сначала тапни по знаку «:» для переворота второй дроби! Затем сокращай любой верх с любым низом.',
+        getDemoTask: () => createTwoFracTask(
+          [{c:7, vars:{p:2}}], [{c:2, vars:{q:1}}],
+          ':',
+          [{c:14, vars:{p:1}}], [{c:6, vars:{q:2}}],
+          '3pq / 2'
+        ),
+        practicePool: [
+          () => createTwoFracTask([{c:2, vars:{x:1}}], [{c:1, vars:{a:1}}], '*', [{c:1, vars:{a:1}}], [{c:8, vars:{x:1}}], '1 / 4'),
+          () => createTwoFracTask([{c:1, vars:{m:2, n:1}}], [{c:15, vars:{p:1}}], '*', [{c:5, vars:{p:1}}], [{c:1, vars:{m:1, n:2}}], 'm / 3n'),
+          () => createTwoFracTask([{c:35, vars:{x:4}}], [{c:18, vars:{y:2}}], '*', [{c:9, vars:{y:1}}], [{c:14, vars:{x:2}}], '5x² / 4y'),
+          () => createTwoFracTask([{c:9, vars:{m:1}}], [{c:14, vars:{n:1}}], ':', [{c:3, vars:{m:2}}], [{c:7, vars:{n:2}}], '3n / 2m'),
+          () => createTwoFracTask([{c:12, vars:{a:3}}], [{c:5, vars:{b:1}}], ':', [{c:4, vars:{a:1}}], [{c:15, vars:{b:2}}], '9a²b'),
+          () => createTwoFracTask([{c:16, vars:{a:2}}], [{c:9, vars:{b:2}}], '*', [{c:3, vars:{b:1}}], [{c:8, vars:{a:1}}], '2a / 3b')
+        ]
+      },
+      {
+        id: 5,
+        title: 'Ступень 5: Шоковая терапия!',
+        goalCount: 1,
+        hasFactorSkill: true,
+        formulaHTML: 'ЗАПРЕТ: (a + b) / b ≠ a + 1 | ПРАВИЛО: k·(a + b) / k = a + b',
+        demoExplain: 'Эксперимент! Почему нельзя сокращать слагаемые напрямую?',
+        practiceHint: 'ШАГ 1: Попробуй перетащить 5 на 5 и посмотри, что случится. ШАГ 2: Перетащи инструмент «Вынести →(» на (10 + 5), вынеси 5 и спаси математику!',
+        getDemoTask: null,
+        practicePool: [
+          () => ({
+            isShockTask: true,
+            shockTriggered: false,
+            op: '*',
+            fracs: [
+              {
+                num: [
+                  {
+                    id: 'shock_poly',
+                    type: 'poly',
+                    displayHTML: '10 + <span id="shockFive" style="color:#ffa657; text-decoration:underline;">5</span>',
+                    expectedFactor: '5',
+                    splitHTML: '<span class="split-f" style="color:#7ee787">5</span>·2 + <span class="split-f" style="color:#7ee787">5</span>·1',
+                    afterFactorTokens: [
+                      { id: 'f_5', type: 'mono', sign: 1, c: 5, vars: {} },
+                      { id: 'f_br', type: 'mono', sign: 1, c: 1, vars: {}, isBracket: true, bracketText: '2 + 1' }
+                    ]
+                  }
+                ],
+                den: [
+                  { id: 'den_5', type: 'mono', sign: 1, c: 5, vars: {} }
+                ]
+              }
+            ],
+            finalAnswerHTML: '2 + 1 = 3'
+          })
+        ]
+      },
+      {
+        id: 6,
+        title: 'Ступень 6: Вынесение за скобку',
+        goalCount: 5,
+        hasFactorSkill: true,
+        formulaHTML: 'Распределительный закон: a·b + a·c = a · (b + c)',
+        demoExplain: 'В выражении <b>(2x + 6) / 4</b> сокращать 6 и 4 нельзя — мешает плюс! Берём инструмент «<b>→(</b>», выносим общий множитель <b>2</b> за скобку: <b>2(x + 3) / 4</b>. Теперь множители 2 и 4 сокращаются!',
+        practiceHint: 'Перетащи инструмент «Вынести →(» снизу на сумму или разность, вынеси общий множитель, а затем сокращай множители и одинаковые скобки!',
+        getDemoTask: () => ({
+          op: '*',
+          fracs: [{
+            num: [{
+              id: 'demo_p6', type: 'poly',
+              displayHTML: '2x + 6',
+              expectedFactor: '2',
+              splitHTML: '<span class="split-f" style="color:#7ee787">2</span>·x + <span class="split-f" style="color:#7ee787">2</span>·3',
+              afterFactorTokens: [
+                { id: 'd6_1', type: 'mono', sign: 1, c: 2, vars: {} },
+                { id: 'd6_2', type: 'mono', sign: 1, c: 1, vars: {}, isBracket: true, bracketText: 'x + 3' }
+              ]
+            }],
+            den: [{ id: 'd6_den', type: 'mono', sign: 1, c: 4, vars: {} }]
+          }],
+          finalAnswerHTML: '(x + 3) / 2'
+        }),
+        practicePool: [
+          () => ({
+            op: '*',
+            fracs: [{
+              num: [{
+                id: 'p6_1', type: 'poly', displayHTML: '3a + 9', expectedFactor: '3',
+                splitHTML: '<span class="split-f" style="color:#7ee787">3</span>·a + <span class="split-f" style="color:#7ee787">3</span>·3',
+                afterFactorTokens: [
+                  { id: 't6_1a', type: 'mono', sign: 1, c: 3, vars: {} },
+                  { id: 't6_1b', type: 'mono', sign: 1, c: 1, vars: {}, isBracket: true, bracketText: 'a + 3' }
+                ]
+              }],
+              den: [{ id: 't6_1c', type: 'mono', sign: 1, c: 6, vars: {a:1} }]
+            }],
+            finalAnswerHTML: '(a + 3) / 2a'
+          }),
+          () => ({
+            op: '*',
+            fracs: [{
+              num: [{
+                id: 'p6_2', type: 'poly', displayHTML: 'x<sup>2</sup> − 5x', expectedFactor: 'x',
+                splitHTML: 'x·<span class="split-f" style="color:#7ee787">x</span> − 5·<span class="split-f" style="color:#7ee787">x</span>',
+                afterFactorTokens: [
+                  { id: 't6_2a', type: 'mono', sign: 1, c: 1, vars: {x:1} },
+                  { id: 't6_2b', type: 'mono', sign: 1, c: 1, vars: {}, isBracket: true, bracketText: 'x − 5' }
+                ]
+              }],
+              den: [{ id: 't6_2c', type: 'mono', sign: 1, c: 2, vars: {x:1} }]
+            }],
+            finalAnswerHTML: '(x − 5) / 2'
+          }),
+          () => ({
+            op: '*',
+            fracs: [{
+              num: [{
+                id: 'p6_3n', type: 'poly', displayHTML: '4m + 8', expectedFactor: '4',
+                splitHTML: '<span class="split-f" style="color:#7ee787">4</span>·m + <span class="split-f" style="color:#7ee787">4</span>·2',
+                afterFactorTokens: [
+                  { id: 't6_3a', type: 'mono', sign: 1, c: 4, vars: {} },
+                  { id: 't6_3b', type: 'mono', sign: 1, c: 1, vars: {}, isBracket: true, bracketText: 'm + 2' }
+                ]
+              }],
+              den: [{
+                id: 'p6_3d', type: 'poly', displayHTML: 'm<sup>2</sup> + 2m', expectedFactor: 'm',
+                splitHTML: 'm·<span class="split-f" style="color:#7ee787">m</span> + 2·<span class="split-f" style="color:#7ee787">m</span>',
+                afterFactorTokens: [
+                  { id: 't6_3c', type: 'mono', sign: 1, c: 1, vars: {m:1} },
+                  { id: 't6_3d', type: 'mono', sign: 1, c: 1, vars: {}, isBracket: true, bracketText: 'm + 2' }
+                ]
+              }]
+            }],
+            finalAnswerHTML: '4 / m'
+          }),
+          () => ({
+            op: '*',
+            fracs: [
+              {
+                num: [{
+                  id: 'p6_4n', type: 'poly', displayHTML: 'y<sup>2</sup> + 3y', expectedFactor: 'y',
+                  splitHTML: 'y·<span class="split-f" style="color:#7ee787">y</span> + 3·<span class="split-f" style="color:#7ee787">y</span>',
+                  afterFactorTokens: [
+                    { id: 't6_4a', type: 'mono', sign: 1, c: 1, vars: {y:1} },
+                    { id: 't6_4b', type: 'mono', sign: 1, c: 1, vars: {}, isBracket: true, bracketText: 'y + 3' }
+                  ]
+                }],
+                den: [{ id: 't6_4c', type: 'mono', sign: 1, c: 4, vars: {} }]
+              },
+              {
+                num: [{ id: 't6_4d', type: 'mono', sign: 1, c: 1, vars: {y:1} }],
+                den: [{
+                  id: 'p6_4d', type: 'poly', displayHTML: '2y + 6', expectedFactor: '2',
+                  splitHTML: '<span class="split-f" style="color:#7ee787">2</span>·y + <span class="split-f" style="color:#7ee787">2</span>·3',
+                  afterFactorTokens: [
+                    { id: 't6_4e', type: 'mono', sign: 1, c: 2, vars: {} },
+                    { id: 't6_4f', type: 'mono', sign: 1, c: 1, vars: {}, isBracket: true, bracketText: 'y + 3' }
+                  ]
+                }]
+              }
+            ],
+            finalAnswerHTML: 'y² / 8'
+          }),
+          () => ({
+            op: '*',
+            fracs: [
+              {
+                num: [{
+                  id: 'p6_5n', type: 'poly', displayHTML: '6a<sup>2</sup> − 3ab', expectedFactor: '3a',
+                  splitHTML: '<span class="split-f" style="color:#7ee787">3a</span>·2a − <span class="split-f" style="color:#7ee787">3a</span>·b',
+                  afterFactorTokens: [
+                    { id: 't6_5a', type: 'mono', sign: 1, c: 3, vars: {a:1} },
+                    { id: 't6_5b', type: 'mono', sign: 1, c: 1, vars: {}, isBracket: true, bracketText: '2a − b' }
+                  ]
+                }],
+                den: [{ id: 't6_5c', type: 'mono', sign: 1, c: 5, vars: {b:1} }]
+              },
+              {
+                num: [{ id: 't7_5d', type: 'mono', sign: 1, c: 10, vars: {b:2} }],
+                den: [{ id: 't7_5e', type: 'mono', sign: 1, c: 1, vars: {}, isBracket: true, bracketText: '2a − b' }]
+              }
+            ],
+            finalAnswerHTML: '6ab'
+          })
+        ]
+      },
+      {
+        id: 7,
+        title: 'Ступень 7: Ловушка знака (−1)',
+        goalCount: 4,
+        hasFactorSkill: true,
+        formulaHTML: 'Смена знака разности: b − a = −1 · (a − b)',
+        demoExplain: 'Скобки <b>(5 − x)</b> и <b>(x − 5)</b> отличаются только порядком вычитания! Перетаскиваем инструмент «<b>→(</b>» на (5 − x) и выносим <b>−1</b>: получаем <b>−1 · (x − 5)</b>. Теперь скобки одинаковы!',
+        practiceHint: 'Выноси «−1» через инструмент «→(», чтобы развернуть разность (b − a) в −1(a − b) и сократить одинаковые скобки!',
+        getDemoTask: () => ({
+          op: '*',
+          fracs: [{
+            num: [{
+              id: 'demo_p7', type: 'poly',
+              displayHTML: '5 − x',
+              expectedFactor: '-1',
+              splitHTML: '<span class="split-f" style="color:#7ee787">−1</span>·(x − 5)',
+              afterFactorTokens: [
+                { id: 'd7_1', type: 'mono', sign: -1, c: 1, vars: {} },
+                { id: 'd7_2', type: 'mono', sign: 1, c: 1, vars: {}, isBracket: true, bracketText: 'x − 5' }
+              ]
+            }],
+            den: [{ id: 'd7_den', type: 'mono', sign: 1, c: 1, vars: {}, isBracket: true, bracketText: 'x − 5' }]
+          }],
+          finalAnswerHTML: '−1'
+        }),
+        practicePool: [
+          () => ({
+            op: '*',
+            fracs: [{
+              num: [{
+                id: 'p7_1n', type: 'poly', displayHTML: '2a − 6', expectedFactor: '2',
+                splitHTML: '<span class="split-f" style="color:#7ee787">2</span>·a − <span class="split-f" style="color:#7ee787">2</span>·3',
+                afterFactorTokens: [
+                  { id: 't7_1a', type: 'mono', sign: 1, c: 2, vars: {} },
+                  { id: 't7_1b', type: 'mono', sign: 1, c: 1, vars: {}, isBracket: true, bracketText: 'a − 3' }
+                ]
+              }],
+              den: [{
+                id: 'p7_1d', type: 'poly', displayHTML: '3 − a', expectedFactor: '-1',
+                splitHTML: '<span class="split-f" style="color:#7ee787">−1</span>·(a − 3)',
+                afterFactorTokens: [
+                  { id: 't7_1c', type: 'mono', sign: -1, c: 1, vars: {} },
+                  { id: 't7_1d', type: 'mono', sign: 1, c: 1, vars: {}, isBracket: true, bracketText: 'a − 3' }
+                ]
+              }]
+            }],
+            finalAnswerHTML: '−2'
+          }),
+          () => ({
+            op: '*',
+            fracs: [
+              {
+                num: [{ id: 't7_2a', type: 'mono', sign: 1, c: 1, vars: {}, isBracket: true, bracketText: '3a − x' }],
+                den: [{ id: 't7_2b', type: 'mono', sign: 1, c: 21, vars: {b:1} }]
+              },
+              {
+                num: [{ id: 't7_2c', type: 'mono', sign: 1, c: 14, vars: {b:2} }],
+                den: [{
+                  id: 'p7_2d', type: 'poly', displayHTML: 'x − 3a', expectedFactor: '-1',
+                  splitHTML: '<span class="split-f" style="color:#7ee787">−1</span>·(3a − x)',
+                  afterFactorTokens: [
+                    { id: 't7_2d1', type: 'mono', sign: -1, c: 1, vars: {} },
+                    { id: 't7_2d2', type: 'mono', sign: 1, c: 1, vars: {}, isBracket: true, bracketText: '3a − x' }
+                  ]
+                }]
+              }
+            ],
+            finalAnswerHTML: '−2b / 3'
+          }),
+          () => ({
+            op: '*',
+            fracs: [
+              {
+                num: [{
+                  id: 'p7_3n', type: 'poly', displayHTML: 'y<sup>2</sup> − 5y', expectedFactor: 'y',
+                  splitHTML: 'y·<span class="split-f" style="color:#7ee787">y</span> − 5·<span class="split-f" style="color:#7ee787">y</span>',
+                  afterFactorTokens: [
+                    { id: 't7_3a', type: 'mono', sign: 1, c: 1, vars: {y:1} },
+                    { id: 't7_3b', type: 'mono', sign: 1, c: 1, vars: {}, isBracket: true, bracketText: 'y − 5' }
+                  ]
+                }],
+                den: [{ id: 't7_3c', type: 'mono', sign: 1, c: 8, vars: {x:2} }]
+              },
+              {
+                num: [{ id: 't7_3d', type: 'mono', sign: 1, c: 4, vars: {x:1} }],
+                den: [{
+                  id: 'p7_3d', type: 'poly', displayHTML: '5 − y', expectedFactor: '-1',
+                  splitHTML: '<span class="split-f" style="color:#7ee787">−1</span>·(y − 5)',
+                  afterFactorTokens: [
+                    { id: 't7_3e', type: 'mono', sign: -1, c: 1, vars: {} },
+                    { id: 't7_3f', type: 'mono', sign: 1, c: 1, vars: {}, isBracket: true, bracketText: 'y − 5' }
+                  ]
+                }]
+              }
+            ],
+            finalAnswerHTML: '−y / 2x'
+          }),
+          () => ({
+            op: ':',
+            fracs: [
+              {
+                num: [{
+                  id: 'p7_4n', type: 'poly', displayHTML: '4c − 12', expectedFactor: '4',
+                  splitHTML: '<span class="split-f" style="color:#7ee787">4</span>·c − <span class="split-f" style="color:#7ee787">4</span>·3',
+                  afterFactorTokens: [
+                    { id: 't7_4a', type: 'mono', sign: 1, c: 4, vars: {} },
+                    { id: 't7_4b', type: 'mono', sign: 1, c: 1, vars: {}, isBracket: true, bracketText: 'c − 3' }
+                  ]
+                }],
+                den: [{ id: 't7_4c', type: 'mono', sign: 1, c: 5, vars: {d:1} }]
+              },
+              {
+                num: [{
+                  id: 'p7_4n2', type: 'poly', displayHTML: '3 − c', expectedFactor: '-1',
+                  splitHTML: '<span class="split-f" style="color:#7ee787">−1</span>·(c − 3)',
+                  afterFactorTokens: [
+                    { id: 't7_4d', type: 'mono', sign: -1, c: 1, vars: {} },
+                    { id: 't7_4e', type: 'mono', sign: 1, c: 1, vars: {}, isBracket: true, bracketText: 'c − 3' }
+                  ]
+                }],
+                den: [{ id: 't7_4f', type: 'mono', sign: 1, c: 10, vars: {d:2} }]
+              }
+            ],
+            finalAnswerHTML: '−8d'
+          })
+        ]
+      }
+    ];
+
+    function createMonomialTask(numArr, denArr, op, finalAns) {
+      return {
+        op: op || '*',
+        mistakes: 0,
+        usedRadar: false,
+        fracs: [{
+          num: numArr.map((m, i) => ({ id: 'n_'+i+'_'+Math.random(), type: 'mono', sign: m.sign||1, c: m.c, vars: {...m.vars} })),
+          den: denArr.map((m, i) => ({ id: 'd_'+i+'_'+Math.random(), type: 'mono', sign: m.sign||1, c: m.c, vars: {...m.vars} }))
+        }],
+        finalAnswerHTML: finalAns
+      };
+    }
+
+    function createTwoFracTask(n1, d1, op, n2, d2, finalAns) {
+      return {
+        op,
+        mistakes: 0,
+        usedRadar: false,
+        fracs: [
+          {
+            num: n1.map((m, i) => ({ id: 'f1n_'+i, type: 'mono', sign: m.sign||1, c: m.c, vars: {...m.vars} })),
+            den: d1.map((m, i) => ({ id: 'f1d_'+i, type: 'mono', sign: m.sign||1, c: m.c, vars: {...m.vars} }))
+          },
+          {
+            num: n2.map((m, i) => ({ id: 'f2n_'+i, type: 'mono', sign: m.sign||1, c: m.c, vars: {...m.vars} })),
+            den: d2.map((m, i) => ({ id: 'f2d_'+i, type: 'mono', sign: m.sign||1, c: m.c, vars: {...m.vars} }))
+          }
+        ],
+        finalAnswerHTML: finalAns
+      };
+    }
+
+    function generateStage1Task() {
+      const pairs = [[1,2],[2,3],[3,4],[2,5],[3,5],[4,5],[1,3],[3,7]];
+      const [bn, bd] = randChoice(pairs);
+      const k = randInt(2, 7);
+      const ans = bd === 1 ? `${bn}` : `${bn} / ${bd}`;
+      return createMonomialTask([{c: bn*k, vars:{}}], [{c: bd*k, vars:{}}], '*', ans);
+    }
+
+    function generateStage2Task() {
+      const v = randChoice(['x', 'y', 'a', 'm', 'p']);
+      let p1 = randInt(2, 6);
+      let p2 = randInt(1, 5);
+      if (p1 === p2) p1++;
+      let ans = '';
+      if (p1 > p2) {
+        let diff = p1 - p2;
+        ans = diff === 1 ? v : `${v}<sup>${diff}</sup>`;
+      } else {
+        let diff = p2 - p1;
+        ans = diff === 1 ? `1 / ${v}` : `1 / ${v}<sup>${diff}</sup>`;
+      }
+      return createMonomialTask([{c:1, vars:{[v]: p1}}], [{c:1, vars:{[v]: p2}}], '*', ans);
+    }
+
+    function generateStage3Task() {
+      const pairs = [[2,3],[3,2],[3,4],[4,3],[2,5],[5,2],[1,2],[3,1]];
+      const [bn, bd] = randChoice(pairs);
+      const k = randInt(2, 6);
+      const v = randChoice(['x', 'y', 'a', 'm', 'b']);
+      let p1 = randInt(2, 5);
+      let p2 = randInt(1, 4);
+      if (p1 === p2) p1++;
+
+      let numV = p1 > p2 ? { [v]: p1 - p2 } : {};
+      let denV = p2 > p1 ? { [v]: p2 - p1 } : {};
+      let numStr = formatMonomialHTML({ sign: 1, c: bn, vars: numV });
+      let denStr = formatMonomialHTML({ sign: 1, c: bd, vars: denV });
+      let ans = (bd === 1 && Object.keys(denV).length === 0) ? numStr : `${numStr} / ${denStr}`;
+
+      return createMonomialTask(
+        [{ c: bn * k, vars: { [v]: p1 } }],
+        [{ c: bd * k, vars: { [v]: p2 } }],
+        '*',
+        ans
+      );
+    }
+
+    /******************************************************************
+     * 3. СОСТОЯНИЕ ИГРЫ И СОХРАНЕНИЕ (LOCAL STORAGE)
+     ******************************************************************/
+    let state = {
+      studentName: localStorage.getItem('fractionApp_name') || '',
+      stageIdx: (parseInt(localStorage.getItem('fractionApp_stage'), 10) || 1) - 1,
+      progressInStage: parseInt(localStorage.getItem('fractionApp_streak'), 10) || 0,
+      maxUnlockedStage: parseInt(localStorage.getItem('fractionApp_maxStage'), 10) || 1,
+      score: parseInt(localStorage.getItem('fractionApp_score'), 10) || 0,
+      cleanCount: parseInt(localStorage.getItem('fractionApp_cleanCount'), 10) || 0,
+      totalSolved: parseInt(localStorage.getItem('fractionApp_totalSolved'), 10) || 0,
+      cleanStreak: 0,
+      combo: 1,
+      achievements: JSON.parse(localStorage.getItem('fractionApp_ach') || '[]'),
+      isDemoMode: true,
+      currentTask: null,
+      activeDrawerContext: null,
+      drawerValue: ''
+    };
+
+    if (state.stageIdx < 0 || state.stageIdx >= STAGES.length) state.stageIdx = 0;
+
+    function saveProgress() {
+      localStorage.setItem('fractionApp_name', state.studentName);
+      localStorage.setItem('fractionApp_stage', String(state.stageIdx + 1));
+      localStorage.setItem('fractionApp_streak', String(state.progressInStage));
+      localStorage.setItem('fractionApp_maxStage', String(state.maxUnlockedStage));
+      localStorage.setItem('fractionApp_score', String(state.score));
+      localStorage.setItem('fractionApp_cleanCount', String(state.cleanCount));
+      localStorage.setItem('fractionApp_totalSolved', String(state.totalSolved));
+      localStorage.setItem('fractionApp_ach', JSON.stringify(state.achievements));
+    }
+
+    /******************************************************************
+     * 4. ИНИЦИАЛИЗАЦИЯ ЭКРАНОВ И КНОПОК ПЕСОЧНИЦЫ
+     ******************************************************************/
+    const screenWelcome = document.getElementById('screen-welcome');
+    const screenGame = document.getElementById('screen-game');
+    const screenFinish = document.getElementById('screen-finish');
+
+    const inputName = document.getElementById('studentName');
+    const btnStart = document.getElementById('btnStart');
+    const btnHardReset = document.getElementById('btnHardReset');
+
+    if (state.studentName) {
+      inputName.value = state.studentName;
+      inputName.style.display = 'none';
+      btnStart.textContent = `Продолжить (Ступень ${state.stageIdx + 1})`;
+      btnHardReset.style.display = 'block';
+    }
+
+    btnStart.addEventListener('click', () => {
+      const val = inputName.value.trim();
+      if (!val) {
+        inputName.style.borderColor = 'var(--red)';
+        setTimeout(() => inputName.style.borderColor = 'var(--border)', 500);
+        return;
+      }
+      state.studentName = val;
+      saveProgress();
+      showScreen(screenGame);
+      updateHUD();
+      loadStage(state.stageIdx, state.progressInStage === 0);
+    });
+
+    btnHardReset.addEventListener('click', () => {
+      localStorage.clear();
+      state.studentName = '';
+      state.stageIdx = 0;
+      state.progressInStage = 0;
+      state.maxUnlockedStage = 1;
+      state.score = 0;
+      state.cleanCount = 0;
+      state.totalSolved = 0;
+      state.cleanStreak = 0;
+      state.combo = 1;
+      state.achievements = [];
+      inputName.value = '';
+      inputName.style.display = 'block';
+      btnStart.textContent = 'Начать прохождение';
+      btnHardReset.style.display = 'none';
+    });
+
+    document.getElementById('btnBackToStages').addEventListener('click', () => {
+      showScreen(screenGame);
+      loadStage(state.stageIdx, false);
+    });
+
+    document.getElementById('btnResetTask').addEventListener('click', () => {
+      loadCurrentTask();
+    });
+
+    // Кнопка с лампочкой 💡 — просто тихо подсвечивает нужные элементы без лишнего текста
+    document.getElementById('btnRadar').addEventListener('click', () => {
+      const task = state.currentTask;
+      if (!task || task.completed) return;
+      if (!state.isDemoMode) {
+        task.usedRadar = true;
+      }
+
+      if (task.op === ':') {
+        const opEl = document.getElementById('opSign');
+        if (opEl) {
+          opEl.classList.add('radar-glow');
+          setTimeout(() => opEl.classList.remove('radar-glow'), 2200);
+        }
+        return;
+      }
+
+      const polys = document.querySelectorAll('.token.poly-box');
+      if (polys.length > 0 && !task.isShockTask) {
+        polys.forEach(p => {
+          p.classList.add('radar-glow');
+          setTimeout(() => p.classList.remove('radar-glow'), 2200);
+        });
+        return;
+      }
+
+      const allNums = task.fracs.flatMap(f => f.num);
+      const allDens = task.fracs.flatMap(f => f.den);
+      for (let n of allNums) {
+        for (let d of allDens) {
+          if (canReduceTokens(n, d)) {
+            const elN = document.querySelector(`.token[data-id="${n.id}"]`);
+            const elD = document.querySelector(`.token[data-id="${d.id}"]`);
+            if (elN) elN.classList.add('radar-glow');
+            if (elD) elD.classList.add('radar-glow');
+            setTimeout(() => {
+              if (elN) elN.classList.remove('radar-glow');
+              if (elD) elD.classList.remove('radar-glow');
+            }, 2200);
+            return;
+          }
+        }
+      }
+    });
+
+    function showScreen(scr) {
+      [screenWelcome, screenGame, screenFinish].forEach(s => s.classList.remove('active'));
+      scr.classList.add('active');
+    }
+
+    function renderHeaderDots() {
+      const dotsContainer = document.getElementById('uiStageDots');
+      dotsContainer.innerHTML = '';
+      STAGES.forEach((st, idx) => {
+        const dot = document.createElement('div');
+        dot.className = 'stage-dot';
+        if (idx < state.maxUnlockedStage - 1) dot.classList.add('done');
+        if (idx === state.stageIdx) dot.classList.add('current');
+        dot.title = st.title;
+        dot.addEventListener('click', () => {
+          if (idx <= state.maxUnlockedStage - 1) {
+            state.stageIdx = idx;
+            state.progressInStage = 0;
+            saveProgress();
+            loadStage(idx, true);
+          } else {
+            setHint('Эта ступень откроется после прохождения предыдущей!', 'error');
+          }
+        });
+        dotsContainer.appendChild(dot);
+      });
+    }
+
+    function setHint(text, status = 'normal') {
+      const box = document.getElementById('uiInstruction');
+      const span = document.getElementById('uiHintText');
+      box.classList.remove('error', 'success');
+      if (status === 'error') box.classList.add('error');
+      if (status === 'success') box.classList.add('success');
+      span.innerHTML = text;
+    }
+
+    function setStepLog(htmlText) {
+      const logEl = document.getElementById('uiStepLog');
+      if (!htmlText) {
+        logEl.classList.remove('visible');
+        logEl.innerHTML = '';
+      } else {
+        logEl.innerHTML = htmlText;
+        logEl.classList.add('visible');
+      }
+    }
+
+    /******************************************************************
+     * 5. ЗАГРУЗКА СТУПЕНИ И ЗАДАНИЯ
+     ******************************************************************/
+    let demoTimers = [];
+    function clearDemoTimers() {
+      demoTimers.forEach(t => clearTimeout(t));
+      demoTimers = [];
+      const gh = document.getElementById('ghostHand');
+      gh.style.display = 'none';
+    }
+
+    function loadStage(idx, startWithDemo = true) {
+      clearDemoTimers();
+      closeDrawer();
+      state.stageIdx = idx;
+      const stage = STAGES[idx];
+
+      if (!stage.getDemoTask) startWithDemo = false;
+      state.isDemoMode = startWithDemo;
+
+      document.getElementById('uiStageTitle').textContent = stage.title;
+      document.getElementById('uiFormulaPill').textContent = stage.formulaHTML;
+      updateProgressBadge();
+      renderHeaderDots();
+
+      document.getElementById('skillBar').style.display = stage.hasFactorSkill ? 'flex' : 'none';
+      loadCurrentTask();
+    }
+
+    function updateProgressBadge() {
+      const stage = STAGES[state.stageIdx];
+      const badge = document.getElementById('uiProgress');
+      if (state.isDemoMode) {
+        badge.textContent = '👀 Наглядный разбор';
+      } else {
+        badge.textContent = `🎯 ${state.progressInStage} / ${stage.goalCount}`;
+      }
+    }
+
+    function loadCurrentTask() {
+      clearDemoTimers();
+      closeDrawer();
+      setStepLog('');
+      document.getElementById('btnDemoAction').style.display = 'none';
+      document.getElementById('btnNextTask').style.display = 'none';
+
+      const stage = STAGES[state.stageIdx];
+      const modeBadge = document.getElementById('uiModeBadge');
+
+      if (state.isDemoMode && stage.getDemoTask) {
+        modeBadge.textContent = 'Разбор правила';
+        modeBadge.className = 'mode-badge mode-demo';
+        state.currentTask = stage.getDemoTask();
+        setHint(stage.demoExplain);
+        updateHUD();
+        renderEquation();
+        runGhostHandDemo(stage.id);
+      } else {
+        modeBadge.textContent = 'Песочница';
+        modeBadge.className = 'mode-badge mode-practice';
+        if (stage.getPracticeTask) {
+          state.currentTask = stage.getPracticeTask();
+        } else {
+          const poolIdx = state.progressInStage % stage.practicePool.length;
+          state.currentTask = stage.practicePool[poolIdx]();
+        }
+        state.currentTask.mistakes = 0;
+        state.currentTask.usedRadar = false;
+        setHint(stage.practiceHint);
+        updateHUD();
+        renderEquation();
+      }
+      updateProgressBadge();
+    }
+
+    /******************************************************************
+     * 6. ОТРИСОВКА МАТЕМАТИЧЕСКОЙ ДОСКИ И ПЕРЕТАСКИВАНИЕ (DRAG & DROP)
+     ******************************************************************/
+    function renderEquation() {
+      const row = document.getElementById('equationRow');
+      row.innerHTML = '';
+      const task = state.currentTask;
+
+      task.fracs.forEach((frac, fIdx) => {
+        if (fIdx > 0) {
+          const opEl = document.createElement('div');
+          opEl.className = 'op-sign' + (task.op === ':' ? ' clickable' : '');
+          opEl.id = 'opSign';
+          opEl.textContent = task.op === ':' ? ':' : '·';
+          if (task.op === ':') {
+            opEl.title = 'Нажми, чтобы перевернуть вторую дробь';
+            opEl.addEventListener('click', () => handleDivisionFlip());
+          }
+          row.appendChild(opEl);
+        }
+
+        const fracEl = document.createElement('div');
+        fracEl.className = 'fraction';
+        fracEl.id = `frac_${fIdx}`;
+
+        const numEl = document.createElement('div');
+        numEl.className = 'frac-part';
+        frac.num.forEach(tok => numEl.appendChild(createTokenElement(tok, 'num', fIdx)));
+
+        const lineEl = document.createElement('div');
+        lineEl.className = 'frac-line';
+
+        const denEl = document.createElement('div');
+        denEl.className = 'frac-part';
+        frac.den.forEach(tok => denEl.appendChild(createTokenElement(tok, 'den', fIdx)));
+
+        fracEl.appendChild(numEl);
+        fracEl.appendChild(lineEl);
+        fracEl.appendChild(denEl);
+        row.appendChild(fracEl);
+      });
+
+      if (task.completed) {
+        const eqBlock = document.createElement('div');
+        eqBlock.className = 'equals-block';
+        eqBlock.innerHTML = `<span class="equals-sign">=</span><div class="result-box">${task.finalAnswerHTML}</div>`;
+        row.appendChild(eqBlock);
+      }
+    }
+
+    function createTokenElement(tok, pos, fIdx) {
+      tok.pos = pos;
+      tok.fIdx = fIdx;
+
+      const el = document.createElement('div');
+      el.className = 'token';
+      el.dataset.id = tok.id;
+
+      if (tok.type === 'poly') {
+        el.classList.add('poly-box');
+        el.innerHTML = `<span class="tok-text">${tok.displayHTML}</span>`;
+        setupTokenDrag(el, tok);
+      } else {
+        el.classList.add('draggable');
+        if (tok.struck) el.classList.add('struck');
+        const mainText = tok.originalHTML || formatMonomialHTML(tok);
+        tok.originalHTML = mainText;
+        let html = `<span class="tok-text">${mainText}</span>`;
+        if (tok.struck && tok.remHTML) {
+          html += `<span class="rem-badge">${tok.remHTML}</span>`;
+        }
+        el.innerHTML = html;
+        setupTokenDrag(el, tok);
+      }
+      return el;
+    }
+
+    function handleDivisionFlip() {
+      const task = state.currentTask;
+      if (task.op !== ':') return;
+      const frac2El = document.getElementById('frac_1');
+      if (frac2El) frac2El.classList.add('flipping');
+
+      setTimeout(() => {
+        task.op = '*';
+        const temp = task.fracs[1].num;
+        task.fracs[1].num = task.fracs[1].den;
+        task.fracs[1].den = temp;
+        addPoints(15);
+        unlockAchievement('flip_master');
+        setStepLog('✓ Вторая дробь перевёрнута, деление заменено на умножение! Теперь можно сокращать числители со знаменателями.');
+        renderEquation();
+        checkIfTaskCompleted();
+      }, 450);
+    }
+
+    function setupTokenDrag(el, sourceTok) {
+      let isDragging = false;
+      let clone = null;
+
+      el.addEventListener('pointerdown', (e) => {
+        if (state.isDemoMode) return;
+        if (state.currentTask.completed) return;
+        isDragging = true;
+        clone = el.cloneNode(true);
+        clone.classList.add('dragging');
+        clone.style.left = (e.clientX - 30) + 'px';
+        clone.style.top = (e.clientY - 30) + 'px';
+        document.body.appendChild(clone);
+        el.setPointerCapture(e.pointerId);
+      });
+
+      el.addEventListener('pointermove', (e) => {
+        if (!isDragging || !clone) return;
+        clone.style.left = (e.clientX - 30) + 'px';
+        clone.style.top = (e.clientY - 30) + 'px';
+
+        const cRect = clone.getBoundingClientRect();
+        document.querySelectorAll('.token').forEach(targetEl => {
+          if (targetEl === el) return;
+          const tRect = targetEl.getBoundingClientRect();
+          if (rectsOverlap(cRect, tRect)) {
+            targetEl.classList.add('drop-target');
+          } else {
+            targetEl.classList.remove('drop-target');
+          }
+        });
+      });
+
+      el.addEventListener('pointerup', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        if (clone) { clone.remove(); clone = null; }
+
+        let droppedOnEl = null;
+        document.querySelectorAll('.token.drop-target').forEach(tEl => {
+          droppedOnEl = tEl;
+          tEl.classList.remove('drop-target');
+        });
+
+        if (droppedOnEl) {
+          const targetId = droppedOnEl.dataset.id;
+          const targetTok = findTokenById(targetId);
+          if (targetTok) handleTokenDrop(sourceTok, targetTok);
+        }
+      });
+    }
+
+    function rectsOverlap(r1, r2) {
+      return !(r1.right < r2.left || r1.left > r2.right || r1.bottom < r2.top || r1.top > r2.bottom);
+    }
+
+    function findTokenById(id) {
+      for (let f of state.currentTask.fracs) {
+        for (let t of f.num) if (t.id === id) return t;
+        for (let t of f.den) if (t.id === id) return t;
+      }
+      return null;
+    }
+
+    /******************************************************************
+     * 7. ПРОВЕРКА ПРАВИЛ ПРИ ПЕРЕТАСКИВАНИИ ТОКЕНОВ
+     ******************************************************************/
+    function handleTokenDrop(t1, t2) {
+      const task = state.currentTask;
+
+      if (task.op === ':') {
+        registerMistake();
+        setHint('Стоп! При делении сокращать нельзя. Сначала нажми на знак «:», чтобы перевернуть вторую дробь!', 'error');
+        return;
+      }
+
+      if (task.isShockTask && (t1.type === 'poly' || t2.type === 'poly')) {
+        triggerShockTherapyAnimation();
+        return;
+      }
+
+      if (t1.type === 'poly' || t2.type === 'poly') {
+        registerMistake();
+        setHint('Слагаемые (где есть + или −) сокращать нельзя! Сначала перетащи на выражение инструмент «Вынести →(» снизу.', 'error');
+        return;
+      }
+
+      if (t1.pos === t2.pos) {
+        setHint('Сокращать можно только верхний множитель (числитель) с нижним (знаменателем)!', 'error');
+        return;
+      }
+
+      // Одинаковые скобки сокращаются мгновенно
+      if (t1.isBracket && t2.isBracket) {
+        if (t1.bracketText === t2.bracketText) {
+          t1.struck = true; t1.eliminated = true; t1.remHTML = '1';
+          t2.struck = true; t2.eliminated = true; t2.remHTML = '1';
+          addPoints(25);
+          setStepLog(`✓ Скобки (${t1.bracketText}) полностью сокращены!`);
+          renderEquation();
+          checkIfTaskCompleted();
+        } else {
+          registerMistake();
+          setHint('Эти скобки отличаются знаками! Вынеси «−1» с помощью инструмента «→(» снизу.', 'error');
+        }
+        return;
+      }
+
+      if (!canReduceTokens(t1, t2)) {
+        registerMistake();
+        setHint('У этих двух элементов нет общих делителей или общих букв.', 'error');
+        return;
+      }
+
+      openDrawerForReduce(t1, t2);
+    }
+
+    function triggerShockTherapyAnimation() {
+      const row = document.getElementById('equationRow');
+      row.innerHTML = `
+        <div class="fraction">
+          <div class="frac-part">
+            <span class="token">10 + <s style="color:var(--red)">5</s> <span class="rem-badge">1</span></span>
+          </div>
+          <div class="frac-line"></div>
+          <div class="frac-part">
+            <span class="token"><s style="color:var(--red)">5</s> <span class="rem-badge">1</span></span>
+          </div>
+        </div>
+        <div class="equals-block">
+          <span class="equals-sign" style="color:var(--red)">=</span>
+          <div class="result-box" style="border-color:var(--red); color:var(--red); background:rgba(248,81,73,0.15);">10 + 1 = 11 (АБСУРД!)</div>
+        </div>
+      `;
+      setHint('🚨 МАТЕМАТИКА СЛОМАЛАСЬ! На самом деле (10 + 5) / 5 = 15 / 5 = 3, а при сокращении слагаемых вышло 11! Слагаемые сокращать НЕЛЬЗЯ!', 'error');
+      setStepLog('Теперь исправим: сейчас пример вернётся — перетащи инструмент «Вынести →(» на (10 + 5) и вынеси общий множитель 5!');
+
+      setTimeout(() => {
+        renderEquation();
+      }, 4300);
+    }
+
+    /******************************************************************
+     * 8. ИНСТРУМЕНТ «ВЫНЕСТИ ЗА СКОБКУ» →( И ПЛАВНАЯ АНИМАЦИЯ
+     ******************************************************************/
+    const skillFactor = document.getElementById('skillFactor');
+    let isDraggingSkill = false;
+    let skillClone = null;
+
+    skillFactor.addEventListener('pointerdown', (e) => {
+      if (state.isDemoMode) return;
+      isDraggingSkill = true;
+      skillClone = skillFactor.cloneNode(true);
+      skillClone.classList.add('dragging');
+      skillClone.style.left = (e.clientX - 29) + 'px';
+      skillClone.style.top = (e.clientY - 29) + 'px';
+      document.body.appendChild(skillClone);
+      skillFactor.setPointerCapture(e.pointerId);
+    });
+
+    skillFactor.addEventListener('pointermove', (e) => {
+      if (!isDraggingSkill || !skillClone) return;
+      skillClone.style.left = (e.clientX - 29) + 'px';
+      skillClone.style.top = (e.clientY - 29) + 'px';
+
+      const sRect = skillClone.getBoundingClientRect();
+      document.querySelectorAll('.token.poly-box').forEach(pEl => {
+        if (rectsOverlap(sRect, pEl.getBoundingClientRect())) {
+          pEl.classList.add('droppable-skill');
+        } else {
+          pEl.classList.remove('droppable-skill');
+        }
+      });
+    });
+
+    skillFactor.addEventListener('pointerup', () => {
+      if (!isDraggingSkill) return;
+      isDraggingSkill = false;
+      if (skillClone) { skillClone.remove(); skillClone = null; }
+
+      let targetPolyEl = null;
+      document.querySelectorAll('.token.poly-box.droppable-skill').forEach(el => {
+        targetPolyEl = el;
+        el.classList.remove('droppable-skill');
+      });
+
+      if (targetPolyEl) {
+        const polyTok = findTokenById(targetPolyEl.dataset.id);
+        if (polyTok) openDrawerForFactor(polyTok, targetPolyEl);
+      }
+    });
+
+    /******************************************************************
+     * 9. ВЫДВИЖНАЯ КЛАВИАТУРА (DRAWER) И ОБРАБОТКА ВВОДА
+     ******************************************************************/
+    const inputDrawer = document.getElementById('inputDrawer');
+    const drawerTitle = document.getElementById('drawerTitle');
+    const drawerDisplay = document.getElementById('drawerDisplay');
+    const keypadGrid = document.getElementById('keypadGrid');
+
+    function buildKeypad() {
+      const keys = [
+        '1','2','3','4','5','6',
+        '7','8','9','0','-','^',
+        'x','y','a','b','c','m',
+        'n','p','q','d','DEL','OK'
+      ];
+      keypadGrid.innerHTML = '';
+      keys.forEach(k => {
+        const btn = document.createElement('button');
+        btn.className = 'key-btn';
+        if (/[a-z\^]/.test(k) && k !== 'DEL' && k !== 'OK') btn.classList.add('var-key');
+        if (k === 'DEL') {
+          btn.classList.add('action-del');
+          btn.textContent = '⌫';
+        } else if (k === 'OK') {
+          btn.classList.add('action-ok');
+          btn.textContent = 'Применить ✓';
+        } else {
+          btn.textContent = k;
+        }
+        btn.addEventListener('click', () => handleKeyPress(k));
+        keypadGrid.appendChild(btn);
+      });
+    }
+    buildKeypad();
+
+    window.addEventListener('keydown', (e) => {
+      if (!inputDrawer.classList.contains('active')) return;
+      if (e.key === 'Enter') { e.preventDefault(); handleKeyPress('OK'); }
+      else if (e.key === 'Backspace') { e.preventDefault(); handleKeyPress('DEL'); }
+      else if (/^[0-9a-zA-Z\-\^]$/.test(e.key)) { handleKeyPress(e.key.toLowerCase()); }
+    });
+
+    function handleKeyPress(k) {
+      if (k === 'DEL') {
+        state.drawerValue = state.drawerValue.slice(0, -1);
+      } else if (k === 'OK') {
+        submitDrawerInput();
+        return;
+      } else {
+        if (state.drawerValue.length < 7) state.drawerValue += k;
+      }
+      drawerDisplay.innerHTML = state.drawerValue.replace(/\^(\d+)/g, '<sup>$1</sup>');
+    }
+
+    function openDrawerForReduce(t1, t2) {
+      state.activeDrawerContext = { type: 'reduce', t1, t2 };
+      state.drawerValue = '';
+      drawerDisplay.textContent = '';
+      drawerTitle.innerHTML = `На что разделим ${formatMonomialHTML(t1)} и ${formatMonomialHTML(t2)}?`;
+      inputDrawer.classList.add('active');
+    }
+
+    function openDrawerForFactor(polyTok, polyEl) {
+      state.activeDrawerContext = { type: 'factor', polyTok, polyEl };
+      state.drawerValue = '';
+      drawerDisplay.textContent = '';
+      drawerTitle.innerHTML = `Что вынесем за скобку из (${polyTok.displayHTML})?`;
+      inputDrawer.classList.add('active');
+    }
+
+    function closeDrawer() {
+      inputDrawer.classList.remove('active');
+      state.activeDrawerContext = null;
+    }
+
+    function submitDrawerInput() {
+      const ctx = state.activeDrawerContext;
+      if (!ctx) return;
+      const raw = state.drawerValue.trim().toLowerCase();
+      if (!raw) return;
+
+      if (ctx.type === 'reduce') {
+        const parsed = parseUserInput(raw);
+        if (!parsed || (parsed.c === 1 && Object.keys(parsed.vars).length === 0)) {
+          setHint('Введи общий делитель (число или степень больше 1)!', 'error');
+          return;
+        }
+        const { t1, t2 } = ctx;
+        if (t1.c % parsed.c !== 0 || t2.c % parsed.c !== 0) {
+          registerMistake();
+          setHint(`Одно из чисел не делится нацело на ${parsed.c}! Попробуй другой делитель.`, 'error');
+          return;
+        }
+        for (let v of Object.keys(parsed.vars)) {
+          let p = parsed.vars[v];
+          if ((t1.vars[v] || 0) < p || (t2.vars[v] || 0) < p) {
+            registerMistake();
+            setHint(`Степень ${v}<sup>${p}</sup> слишком велика! Выбирай меньший показатель степени.`, 'error');
+            return;
+          }
+        }
+        const before1 = formatMonomialHTML(t1);
+        const before2 = formatMonomialHTML(t2);
+        const divHTML = formatMonomialHTML(parsed);
+
+        applyReduction(t1, parsed);
+        applyReduction(t2, parsed);
+        closeDrawer();
+        addPoints(20);
+        unlockAchievement('first_cut');
+        renderEquation();
+        setStepLog(`✓ Разделили ${before1} и ${before2} на <b>${divHTML}</b> → получили <b>${t1.remHTML}</b> и <b>${t2.remHTML}</b>.`);
+        checkIfTaskCompleted();
+
+      } else if (ctx.type === 'factor') {
+        const { polyTok, polyEl } = ctx;
+        const normalizedUser = raw.replace(/\s+/g, '').replace('−', '-');
+        const normalizedExpected = polyTok.expectedFactor.toLowerCase();
+
+        if (normalizedUser !== normalizedExpected) {
+          registerMistake();
+          setHint(`Подумай ещё! Какой общий множитель (или −1 для разворота знаков) нужно вынести за скобку?`, 'error');
+          return;
+        }
+        closeDrawer();
+        addPoints(30);
+        unlockAchievement('factor_pro');
+        if (normalizedExpected === '-1') {
+          unlockAchievement('minus_tamer');
+        }
+        runSmoothFactorAnimation(polyTok, polyEl);
+      }
+    }
+
+    function applyReduction(tok, div) {
+      tok.c = tok.c / div.c;
+      for (let v of Object.keys(div.vars)) {
+        tok.vars[v] = (tok.vars[v] || 0) - div.vars[v];
+        if (tok.vars[v] <= 0) delete tok.vars[v];
+      }
+      tok.struck = true;
+      tok.remHTML = formatMonomialHTML(tok);
+    }
+
+    function runSmoothFactorAnimation(polyTok, polyEl, onDoneCallback) {
+      polyEl.innerHTML = `<span style="color:var(--muted)">(</span> ${polyTok.splitHTML} <span style="color:var(--muted)">)</span>`;
+
+      setTimeout(() => {
+        const splitSpans = polyEl.querySelectorAll('.split-f');
+        const targetRect = polyEl.getBoundingClientRect();
+        const flyers = [];
+
+        splitSpans.forEach(sp => {
+          const r = sp.getBoundingClientRect();
+          const flyer = document.createElement('div');
+          flyer.className = 'flyer';
+          flyer.innerHTML = sp.innerHTML;
+          flyer.style.left = r.left + 'px';
+          flyer.style.top = r.top + 'px';
+          document.body.appendChild(flyer);
+          sp.style.opacity = '0';
+
+          const dx = (targetRect.left - 18) - r.left;
+          const dy = targetRect.top - r.top;
+          setTimeout(() => {
+            flyer.style.transform = `translate(${dx}px, ${dy}px) scale(0.85)`;
+            flyer.style.opacity = '0.15';
+          }, 40);
+          flyers.push(flyer);
+        });
+
+        setTimeout(() => {
+          flyers.forEach(f => f.remove());
+          const frac = state.currentTask.fracs[polyTok.fIdx];
+          const arr = polyTok.pos === 'num' ? frac.num : frac.den;
+          const idx = arr.findIndex(x => x.id === polyTok.id);
+          if (idx !== -1) {
+            const clonedTokens = polyTok.afterFactorTokens.map(t => ({
+              ...t,
+              id: t.id + '_' + Math.random(),
+              vars: { ...(t.vars || {}) }
+            }));
+            arr.splice(idx, 1, ...clonedTokens);
+          }
+          renderEquation();
+          setStepLog(`✓ Вынесли общий множитель <b>${polyTok.expectedFactor}</b> за скобку! Сумма превратилась в произведение.`);
+          if (onDoneCallback) onDoneCallback();
+        }, 780);
+      }, 650);
+    }
+
+    /******************************************************************
+     * 10. ПРОВЕРКА ПОЛНОГО РЕШЕНИЯ ПРИМЕРА
+     ******************************************************************/
+    function checkIfTaskCompleted() {
+      const task = state.currentTask;
+      if (task.op === ':') return false;
+
+      for (let f of task.fracs) {
+        for (let t of [...f.num, ...f.den]) {
+          if (t.type === 'poly') return false;
+        }
+      }
+
+      const allNums = task.fracs.flatMap(f => f.num);
+      const allDens = task.fracs.flatMap(f => f.den);
+
+      for (let n of allNums) {
+        for (let d of allDens) {
+          if (canReduceTokens(n, d)) return false;
+        }
+      }
+
+      task.completed = true;
+      renderEquation();
+
+      if (state.isDemoMode) {
+        const btnDemo = document.getElementById('btnDemoAction');
+        btnDemo.style.display = 'block';
+        btnDemo.textContent = 'В песочницу (Решать самому) →';
+        btnDemo.onclick = () => {
+          state.isDemoMode = false;
+          loadCurrentTask();
+        };
+      } else {
+        state.progressInStage++;
+        state.totalSolved++;
+        const stage = STAGES[state.stageIdx];
+
+        if (!task.mistakes && !task.usedRadar) {
+          state.score += 50;
+          state.cleanCount++;
+          state.cleanStreak++;
+          if (state.cleanStreak >= 5) {
+            unlockAchievement('sniper');
+          }
+        }
+        updateHUD();
+
+        if (stage.id === 5) {
+          unlockAchievement('math_saved');
+        }
+
+        if (state.progressInStage >= stage.goalCount) {
+          if (state.stageIdx + 2 > state.maxUnlockedStage) {
+            state.maxUnlockedStage = Math.min(STAGES.length, state.stageIdx + 2);
+          }
+          saveProgress();
+          updateProgressBadge();
+          renderHeaderDots();
+
+          const btnNext = document.getElementById('btnNextTask');
+          btnNext.style.display = 'block';
+          if (state.stageIdx < STAGES.length - 1) {
+            setStepLog(`🎉 Итог: <b>${task.finalAnswerHTML}</b>. Ступень ${stage.id} пройдена!`);
+            btnNext.textContent = `Открыть Ступень ${stage.id + 1} →`;
+            btnNext.onclick = () => {
+              state.stageIdx++;
+              state.progressInStage = 0;
+              saveProgress();
+              loadStage(state.stageIdx, true);
+            };
+          } else {
+            setStepLog(`🏆 Все 7 ступеней пройдены! Итоговый ответ: <b>${task.finalAnswerHTML}</b>.`);
+            btnNext.textContent = 'Посмотреть итоговый счёт 🏆';
+            btnNext.onclick = () => showFinalCertificate();
+          }
+        } else {
+          saveProgress();
+          updateProgressBadge();
+          setStepLog(`✓ Дробь несократима! Ответ: <b>${task.finalAnswerHTML}</b> (${state.progressInStage}/${stage.goalCount}).`);
+          const btnNext = document.getElementById('btnNextTask');
+          btnNext.style.display = 'block';
+          btnNext.textContent = 'Следующий пример →';
+          btnNext.onclick = () => loadCurrentTask();
+        }
+      }
+      return true;
+    }
+
+    function showFinalCertificate() {
+      showScreen(screenFinish);
+      document.getElementById('certName').textContent = state.studentName;
+      document.getElementById('certScore').textContent = `${state.score} ОЧКОВ`;
+
+      const achListEl = document.getElementById('certAchList');
+      achListEl.innerHTML = '';
+      state.achievements.forEach(id => {
+        const meta = ACHIEVEMENTS_META[id];
+        if (meta) {
+          const chip = document.createElement('div');
+          chip.className = 'ach-chip';
+          chip.textContent = `${meta.icon} ${meta.title}`;
+          achListEl.appendChild(chip);
+        }
+      });
+
+      let hash = 0;
+      for (let i = 0; i < state.studentName.length; i++) {
+        hash = (hash * 31 + state.studentName.charCodeAt(i)) % 9000 + 1000;
+      }
+      document.getElementById('certCode').textContent = `КОД: L94-${hash}-S${state.score}`;
+    }
+
+    /******************************************************************
+     * 11. АВТОМАТИЧЕСКАЯ ОБУЧАЮЩАЯ АНИМАЦИЯ (ПРИЗРАЧНЫЙ ПАЛЬЧИК 👆)
+     ******************************************************************/
+    function moveGhostHandBetween(elFrom, elTo, callback) {
+      const gh = document.getElementById('ghostHand');
+      if (!elFrom || !elTo) return;
+      const r1 = elFrom.getBoundingClientRect();
+      const r2 = elTo.getBoundingClientRect();
+
+      gh.style.display = 'block';
+      gh.style.left = (r1.left + r1.width / 2 - 10) + 'px';
+      gh.style.top = (r1.top + r1.height / 2 - 10) + 'px';
+
+      const t1 = setTimeout(() => {
+        gh.style.left = (r2.left + r2.width / 2 - 10) + 'px';
+        gh.style.top = (r2.top + r2.height / 2 - 10) + 'px';
+      }, 300);
+
+      const t2 = setTimeout(() => {
+        gh.style.display = 'none';
+        if (callback) callback();
+      }, 1150);
+
+      demoTimers.push(t1, t2);
+    }
+
+    function runGhostHandDemo(stageId) {
+      const btnDemo = document.getElementById('btnDemoAction');
+      btnDemo.style.display = 'block';
+      btnDemo.textContent = 'В песочницу (Решать самому) →';
+      btnDemo.onclick = () => {
+        clearDemoTimers();
+        state.isDemoMode = false;
+        loadCurrentTask();
+      };
+
+      const tStart = setTimeout(() => {
+        const tokens = document.querySelectorAll('#equationRow .token');
+        if (stageId === 1 && tokens.length >= 2) {
+          moveGhostHandBetween(tokens[0], tokens[1], () => {
+            const f = state.currentTask.fracs[0];
+            applyReduction(f.num[0], { c: 2, vars: {} });
+            applyReduction(f.den[0], { c: 2, vars: {} });
+            setStepLog('Разбор шага: 2 : 2 = 1 (в числителе), 4 : 2 = 2 (в знаменателе) → <b>1 / 2</b>.');
+            checkIfTaskCompleted();
+          });
+        } else if (stageId === 2 && tokens.length >= 2) {
+          moveGhostHandBetween(tokens[0], tokens[1], () => {
+            const f = state.currentTask.fracs[0];
+            applyReduction(f.num[0], { c: 1, vars: { x: 2 } });
+            applyReduction(f.den[0], { c: 1, vars: { x: 2 } });
+            setStepLog('Разбор шага: Вычитаем степени 5 − 2 = 3 → в числителе остаётся <b>x³</b>.');
+            checkIfTaskCompleted();
+          });
+        } else if (stageId === 3 && tokens.length >= 2) {
+          moveGhostHandBetween(tokens[0], tokens[1], () => {
+            const f = state.currentTask.fracs[0];
+            applyReduction(f.num[0], { c: 4, vars: { x: 2 } });
+            applyReduction(f.den[0], { c: 4, vars: { x: 2 } });
+            setStepLog('Разбор шага: Числа 12 и 8 сократили на 4, а степени x³ и x² сократили на x² → <b>3x / 2</b>.');
+            checkIfTaskCompleted();
+          });
+        } else if (stageId === 4) {
+          const opEl = document.getElementById('opSign');
+          if (opEl) {
+            moveGhostHandBetween(opEl, opEl, () => {
+              handleDivisionFlip();
+              const tNext = setTimeout(() => {
+                const f = state.currentTask.fracs;
+                applyReduction(f[0].num[0], { c: 7, vars: { p: 1 } });
+                applyReduction(f[1].den[0], { c: 7, vars: { p: 1 } });
+                applyReduction(f[0].den[0], { c: 2, vars: { q: 1 } });
+                applyReduction(f[1].num[0], { c: 2, vars: { q: 1 } });
+                setStepLog('Разбор шага: Перевернули вторую дробь и сократили крест-накрест 7p² с 14p и 6q² с 2q → <b>3pq / 2</b>.');
+                checkIfTaskCompleted();
+              }, 900);
+              demoTimers.push(tNext);
+            });
+          }
+        } else if (stageId === 6 || stageId === 7) {
+          const polyEl = document.querySelector('#equationRow .token.poly-box');
+          const skillEl = document.getElementById('skillFactor');
+          if (polyEl && skillEl) {
+            moveGhostHandBetween(skillEl, polyEl, () => {
+              const polyTok = findTokenById(polyEl.dataset.id);
+              runSmoothFactorAnimation(polyTok, polyEl, () => {
+                const tNext = setTimeout(() => {
+                  const f = state.currentTask.fracs[0];
+                  if (stageId === 6) {
+                    applyReduction(f.num[0], { c: 2, vars: {} });
+                    applyReduction(f.den[0], { c: 2, vars: {} });
+                    setStepLog('Разбор шага: 2x + 6 = 2(x + 3). Затем множитель 2 сократили со знаменателем 4 → <b>(x + 3) / 2</b>.');
+                  } else {
+                    f.num[1].struck = true; f.num[1].eliminated = true; f.num[1].remHTML = '1';
+                    f.den[0].struck = true; f.den[0].eliminated = true; f.den[0].remHTML = '1';
+                    setStepLog('Разбор шага: 5 − x = −1(x − 5). Одинаковые скобки (x − 5) полностью сократились → <b>−1</b>.');
+                  }
+                  checkIfTaskCompleted();
+                }, 700);
+                demoTimers.push(tNext);
+              });
+            });
+          }
+        }
+      }, 900);
+
+      demoTimers.push(tStart);
+    }
+  </script>
+</body>
+</html>
